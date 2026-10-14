@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="George and Bunny’s Borrego Springs house in 3D: the existing house, the proposed west addition, the pool court and the flood grading, on the real ground.">
+<title>Broken Arrow House</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout (like the Centro Equino model): one sidebar from top to bottom with every control and the legend; the 3D fills the rest.
+   Phones: the 3D on top, the sidebar below it as a scrolling sheet. */
+:root {
+  --sky: #e6ebee; --panel: #fbfaf7; --ink: #1d2326; --muted: #5d676e; --line: #d7dadb;
+  --pool: #187f8c; --lot: #d99a1c; --lot-maybe: #c45a2c;
+  --display: 'Archivo', 'Arial Narrow', system-ui, sans-serif;
+  --body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --sky: #141a1e; --panel: #1d2428; --ink: #e6eaec; --muted: #9aa5ac; --line: #343d42;
+  --pool: #4cb9c6; --lot: #f0b43a; --lot-maybe: #e5794a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --sky: #141a1e; --panel: #1d2428; --ink: #e6eaec; --muted: #9aa5ac; --line: #343d42;
+  --pool: #4cb9c6; --lot: #f0b43a; --lot-maybe: #e5794a; color-scheme: dark }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--sky); color: var(--ink); font-family: var(--body); overflow: hidden;
+  display: grid; grid-template-columns: 320px minmax(0, 1fr); height: 100dvh; }
+#side { background: var(--panel); border-right: 1px solid var(--line); overflow-y: auto; overflow-x: hidden;
+  padding: calc(22px + env(safe-area-inset-top, 0px)) 20px calc(28px + env(safe-area-inset-bottom, 0px));
+  display: grid; gap: 22px; align-content: start; }
+#side > * { min-width: 0; }
+#side section { display: grid; gap: 8px; }
+#side section + section { border-top: 1px solid var(--line); padding-top: 18px; }
+main { position: relative; min-width: 0; min-height: 0; }
+#stage { position: absolute; inset: 0; }
+#stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.eyebrow { font: 600 10.5px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 2px 0 0; font: 800 28px/1 var(--display); font-stretch: 78%; letter-spacing: .01em; text-wrap: balance; }
+.sub { font-size: 13px; color: var(--muted); line-height: 1.45; margin: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 6px; }
+button { font: 600 12px/1 var(--body); color: var(--ink); background: transparent; border: 1px solid var(--line);
+  border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+button:hover { border-color: var(--muted); }
+button[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+button:focus-visible { outline: 2px solid var(--pool); outline-offset: 2px; }
+.lv { display: grid; grid-template-columns: 14px 1fr auto; gap: 8px; align-items: center; font-size: 12.5px; }
+.sw { width: 14px; height: 10px; border-radius: 2px; border: 1px solid var(--line); }
+.num { font: 400 12px/1 var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+.note { color: var(--muted); font-size: 12px; line-height: 1.5; margin: 0; }
+#compass { position: absolute; right: 16px; top: calc(16px + env(safe-area-inset-top, 0px)); width: 46px; height: 46px; border-radius: 50%;
+  background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--line); display: grid; place-items: center; }
+#needle { font: 700 12px/1 var(--display); transform-origin: 50% 50%; display: grid; justify-items: center; gap: 1px; }
+#needle i { width: 2px; height: 12px; background: var(--lot-maybe); display: block; }
+#labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.tag { position: absolute; transform: translate(-50%, -100%); white-space: nowrap; text-align: center; font: 700 12px/1.15 var(--body);
+  color: #1d2326; background: rgba(251,250,247,.9); border-radius: 3px; padding: 3px 6px; box-shadow: 0 1px 2px rgba(0,0,0,.18); }
+.tag small { display: block; font: 400 10.5px/1.2 var(--mono); color: #5d676e; }
+.tag.lot { background: rgba(217,154,28,.92); color: #1d2326; font: 700 11px/1 var(--mono); }
+.tag.lot.maybe { background: rgba(196,90,44,.92); color: #fff; }
+#status { position: absolute; inset: 0; display: grid; place-items: center; font: 600 13px var(--mono); color: var(--muted); pointer-events: none; }
+@media (max-width: 760px) {
+  body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 42dvh); }
+  main { grid-row: 1; } #side { grid-row: 2; border-right: 0; border-top: 1px solid var(--line); padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px)); gap: 16px; }
+  #side section + section { padding-top: 14px; } h1 { font-size: 24px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<aside id="side" aria-label="Controls">
+  <header>
+    <div class="eyebrow">3120 Broken Arrow Rd · Borrego Springs</div>
+    <h1>Broken Arrow House</h1>
+    <p class="sub" style="margin-top:8px">George and Bunny’s house with the proposed west addition, on the real ground. Drag to turn, scroll or pinch to zoom, right-drag to slide.</p>
+  </header>
+  <section>
+    <div class="eyebrow">Views</div>
+    <div class="row" id="views">
+      <button id="v-over" data-v="over">Overhead</button>
+      <button id="v-road" data-v="road">From the road</button>
+      <button id="v-pool" data-v="pool">Pool court</button>
+      <button id="v-eye" data-v="eye">Eye level</button>
+      <button id="v-porch" data-v="porch">V porch</button>
+      <button id="v-street" data-v="street">Street face</button>
+    </div>
+  </section>
+  <section>
+    <div class="eyebrow">Show</div>
+    <div class="row">
+      <button id="t-roof" aria-pressed="true">Roofs</button>
+      <button id="t-add" aria-pressed="true">Addition</button>
+      <button id="t-lots" aria-pressed="true">Lots</button>
+      <button id="t-labels" aria-pressed="true">Labels</button>
+      <button id="t-photo" aria-pressed="true">Aerial photo</button>
+      <button id="t-palms" aria-pressed="true">Palms</button>
+    </div>
+  </section>
+  <section>
+    <div class="eyebrow">Water</div>
+    <div class="row">
+      <button id="t-grade" aria-pressed="true">Proposed grading</button>
+      <button id="t-water" aria-pressed="true">Sheet flow</button>
+    </div>
+  </section>
+  <section aria-label="Floor levels">
+    <div class="eyebrow">Floor levels</div>
+    <div class="lv"><span class="sw" style="background:#f2efe9"></span><span>Existing house</span><span class="num" id="ff-ex"></span></div>
+    <div class="lv"><span class="sw" style="background:#ecd9b8"></span><span>Addition (proposed)</span><span class="num" id="ff-add"></span></div>
+    <div class="lv"><span class="sw" style="background:transparent;border-color:var(--lot)"></span><span>George’s lots</span><span class="num">≈ 8.4 ac</span></div>
+    <div class="lv"><span class="sw" style="background:#e6b873"></span><span>Fill: west berm, pad, road lip</span><span class="num" id="fill-yd"></span></div>
+    <div class="lv"><span class="sw" style="background:#5f7a3c"></span><span>Palms, from the drone photo</span><span class="num" id="palm-n"></span></div>
+  </section>
+  <section>
+    <p class="note">FEMA zone AO: sheet flow about 2 ft deep off the fan. The addition floor sits 3 ft above the highest ground next to it. Heights are from George’s hand section; placement is from the aerial and Raziel’s Rhino plan. The pool court is from Will’s Moasure measurements, tied to the pool, spa and fireplace in Raziel’s plan.</p>
+  </section>
+</aside>
+
+<main>
+  <div id="stage"></div>
+  <div id="labels"></div>
+  <div id="status">loading the ground…</div>
+  <div id="compass" title="North"><div id="needle"><span>N</span><i></i></div></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(async function () {
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const f32 = s => { const b = atob(s), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return new Float32Array(u.buffer); };
+  let D;
+  try { D = await (await fetch('data.json')).json(); }
+  catch (e) { document.getElementById('status').textContent = 'The model data did not load. Reload the page to try again.'; return; }
+
+  // the canvas is turned to sit square with the lots: every world (x east, z south) position is turned by TH on the way in
+  const FR = D.frame || { th: 0, c: [0, 0] }, CT = Math.cos(FR.th), ST = Math.sin(FR.th), [CX, CZ] = FR.c;
+  const rv = (x, z) => [CT * x - ST * z, ST * x + CT * z];
+  const turnArr = a => { for (let k = 0; k < a.length; k += 3) { const [X, Z] = rv(a[k], a[k + 2]); a[k] = X; a[k + 2] = Z; } return a; };
+  const stage = document.getElementById('stage');
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  stage.appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  const setSky = () => { scene.background = new THREE.Color(css('--sky')); };
+  setSky(); matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setSky);
+  new MutationObserver(setSky).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  const camera = new THREE.PerspectiveCamera(40, 1, .3, 2000);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.maxPolarAngle = 1.53; controls.minDistance = 6; controls.maxDistance = 520; controls.target.set(0, 3, 0);
+
+  // light: late-afternoon desert sun from the southwest
+  scene.add(new THREE.HemisphereLight(0xf4f1ea, 0x8a7d66, .75));
+  const sun = new THREE.DirectionalLight(0xfff3e0, .95); sun.position.set(...(([X, Z]) => [X, 90, Z])(rv(-70, 60))); sun.castShadow = true;
+  Object.assign(sun.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70, near: 10, far: 300 }); sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -.0006;
+  scene.add(sun);
+
+  // ground: existing (Z0) and proposed (ZP = with the bow berm + pad); FILL tints the new earth sand
+  const N = D.n, H = D.half, Z0 = f32(D.z), ZP = D.zp ? f32(D.zp) : Z0, FILL = D.fill ? f32(D.fill) : new Float32Array(N * N);
+  let Z = ZP;
+  const g = new THREE.PlaneGeometry(2 * H, 2 * H, N - 1, N - 1); g.rotateX(-Math.PI / 2);
+  const pos = g.attributes.position, colr = new Float32Array(pos.count * 3);
+  g.setAttribute('color', new THREE.BufferAttribute(colr, 3));
+  function setGround(arr, tint) {
+    Z = arr;
+    for (let k = 0; k < pos.count; k++) {
+      pos.setY(k, arr[k]); const t = tint ? Math.min(1, FILL[k] / 1.5) : 0;
+      colr[3 * k] = 1; colr[3 * k + 1] = 1 - .2 * t; colr[3 * k + 2] = 1 - .48 * t;
+    }
+    pos.needsUpdate = true; g.attributes.color.needsUpdate = true; g.computeVertexNormals();
+  }
+  setGround(ZP, true);
+  const tex = new THREE.TextureLoader().load('aerial.jpg', () => { document.getElementById('status').hidden = true; });
+  tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 8;
+  const groundPhoto = new THREE.MeshLambertMaterial({ map: tex, vertexColors: true }), groundPlain = new THREE.MeshLambertMaterial({ color: 0xd9ccb2, vertexColors: true });
+  const ground = new THREE.Mesh(g, groundPhoto); ground.position.set(CX, 0, CZ); ground.receiveShadow = true; scene.add(ground);
+  const step = 2 * H / (N - 1);
+  const groundAt = (x, z) => { const fi = Math.max(0, Math.min(N - 1.001, (x - CX + H) / step)), fj = Math.max(0, Math.min(N - 1.001, (z - CZ + H) / step));
+    const i = Math.floor(fi), j = Math.floor(fj), a = fi - i, b = fj - j;
+    return (Z[j * N + i] * (1 - a) + Z[j * N + i + 1] * a) * (1 - b) + (Z[(j + 1) * N + i] * (1 - a) + Z[(j + 1) * N + i + 1] * a) * b; };
+  if (D.palms) document.getElementById('palm-n').textContent = D.palms.length + ' so far';
+  if (D.design) document.getElementById('fill-yd').textContent = D.design.fill_yd3.total_compacted.toLocaleString() + ' yd³';
+
+  // sheet flow: drops walk downhill on whichever ground is showing; the house walls stop them too
+  const NP = 2600, wp = new Float32Array(NP * 3), age = new Float32Array(NP), trail = [];
+  const wgeo = new THREE.BufferGeometry(); wgeo.setAttribute('position', new THREE.BufferAttribute(wp, 3));
+  const water = new THREE.Points(wgeo, new THREE.PointsMaterial({ color: 0x2aa7c9, size: .9, transparent: true, opacity: .85, depthWrite: false }));
+  scene.add(water);
+  const houseMask = new Uint8Array(N * N);                      // posts under a roof: water goes around
+  const ray = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0), solids = [];
+  const SD = rv(0, 1), SMAX = H * (Math.abs(SD[0]) + Math.abs(SD[1]));   // world south, in canvas terms: the upstream side
+  const rnd = () => [CX - H + Math.random() * 2 * H, CZ - H + Math.random() * 2 * H];
+  function spawn(k) { let x, z; do { [x, z] = rnd(); } while ((x - CX) * SD[0] + (z - CZ) * SD[1] < SMAX - 60);
+    wp[3 * k] = x; wp[3 * k + 2] = z; wp[3 * k + 1] = groundAt(x, z) + .25; age[k] = Math.random() * 40; }
+  for (let k = 0; k < NP; k++) { const [x, z] = rnd(); wp[3 * k] = x; wp[3 * k + 2] = z; wp[3 * k + 1] = groundAt(x, z) + .25; age[k] = Math.random() * 400; }
+  function flowStep() {
+    for (let k = 0; k < NP; k++) {
+      let x = wp[3 * k], z = wp[3 * k + 2];
+      const e = .9, gx = (groundAt(x + e, z) - groundAt(x - e, z)) / (2 * e), gz = (groundAt(x, z + e) - groundAt(x, z - e)) / (2 * e);
+      const m = Math.hypot(gx, gz) + 1e-6, sp = .55;
+      let nx = x - gx / m * sp + (Math.random() - .5) * .12, nz = z - gz / m * sp + (Math.random() - .5) * .12;
+      const fi = Math.round((nx - CX + H) / step), fj = Math.round((nz - CZ + H) / step);
+      if (fi >= 0 && fj >= 0 && fi < N && fj < N && houseMask[fj * N + fi]) { nx = x + (Math.random() - .5) * .8; nz = z - .1; }
+      age[k] += 1;
+      if (Math.abs(nx - CX) > H - 1 || Math.abs(nz - CZ) > H - 1 || age[k] > 900 || m < .002) { spawn(k); continue; }
+      wp[3 * k] = nx; wp[3 * k + 2] = nz; wp[3 * k + 1] = groundAt(nx, nz) + .25;
+    }
+    wgeo.attributes.position.needsUpdate = true;
+  }
+
+  // house
+  const MAT = {
+    existing: { wall: 0xbdb398, roof: 0xd8d3c8, floor: 0xa59c8c, frame: 0x3a332c, wood: 0x7a4b2c },
+    add: { wall: 0xecd9b8, roof: 0xb7a88f, floor: 0x9d907a, frame: 0x3a332c, wood: 0x7a4b2c },
+    glass: 0x6f9fb3 };
+  const groups = { roof: [], add: [] };
+  for (const p of D.parts) {
+    const isAdd = ['addition', 'living', 'stair'].includes(p.zone), set = isAdd ? MAT.add : MAT.existing;
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(turnArr(f32(p.v)), 3)); geo.computeVertexNormals();
+    const m = p.kind === 'glass' ? new THREE.MeshPhongMaterial({ color: MAT.glass, transparent: true, opacity: .55, shininess: 80, side: THREE.DoubleSide, depthWrite: false })
+                                 : new THREE.MeshLambertMaterial({ color: set[p.kind] ?? set.wall, side: THREE.DoubleSide });
+    const mesh = new THREE.Mesh(geo, m); mesh.castShadow = p.kind !== 'glass'; mesh.receiveShadow = true; scene.add(mesh);
+    if (p.kind === 'floor' || p.kind === 'roof') {                // mark the ground posts under the house for the water
+      const a = geo.attributes.position.array;
+      for (let q = 0; q < a.length; q += 9) {
+        const cx = (a[q] + a[q + 3] + a[q + 6]) / 3, cz = (a[q + 2] + a[q + 5] + a[q + 8]) / 3;
+        const i = Math.round((cx - CX + H) / step), j = Math.round((cz - CZ + H) / step);
+        for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if (ii >= 0 && jj >= 0 && ii < D.n && jj < D.n) houseMask[jj * D.n + ii] = 1; }
+      }
+    }
+    if (p.kind === 'roof') groups.roof.push(mesh);
+    if (isAdd) groups.add.push(mesh);
+  }
+
+  // hardscaping from Will's Moasure measurements + the house chimney (colours per part; 'drape' parts follow the ground)
+  const hardGroup = new THREE.Group(); scene.add(hardGroup);
+  for (const p of (D.hard || [])) {
+    const a = turnArr(f32(p.v));
+    if (p.drape) for (let k = 0; k < a.length; k += 3) a[k + 1] = groundAt(a[k], a[k + 2]) + a[k + 1];
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(a, 3)); geo.computeVertexNormals();
+    const m = p.kind === 'water' ? new THREE.MeshPhongMaterial({ color: p.color, transparent: true, opacity: .85, shininess: 120, side: THREE.DoubleSide })
+            : p.kind === 'glass' ? new THREE.MeshPhongMaterial({ color: p.color, transparent: true, opacity: .35, shininess: 90, side: THREE.DoubleSide, depthWrite: false })
+            : new THREE.MeshLambertMaterial({ color: p.color, side: THREE.DoubleSide });
+    const mesh = new THREE.Mesh(geo, m); mesh.castShadow = p.kind === 'hard'; mesh.receiveShadow = true; hardGroup.add(mesh);
+  }
+  // lots
+  const lotLines = [], tags = [];
+  for (const L of D.lots) {
+    const col = new THREE.Color(L.own === 'george' ? css('--lot') : L.own === 'maybe' ? css('--lot-maybe') : '#ffffff');
+    let run = [];
+    const flush = () => { if (run.length > 1) { const geo = new THREE.BufferGeometry().setFromPoints(run);
+      const ln = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: col, transparent: L.own === 'other', opacity: L.own === 'other' ? .55 : 1 })); scene.add(ln); lotLines.push(ln); } run = []; };
+    for (let k = 0; k < L.pts.length; k += 3) { if (L.pts[k] === null) { flush(); k -= 2; continue; } const [X, Z] = rv(L.pts[k], L.pts[k + 2]); run.push(new THREE.Vector3(X, L.pts[k + 1], Z)); }
+    flush();
+    const [lx, lz] = rv(L.c[0], L.c[2]);
+    if (L.own !== 'other' && !L.lot.includes('house') && Math.abs(lx - CX) < H && Math.abs(lz - CZ) < H)
+      tags.push({ el: mkTag(`Lot ${L.lot}`, `${L.ac} ac`, 'lot' + (L.own === 'maybe' ? ' maybe' : '')), p: new THREE.Vector3(lx, groundAt(lx, lz) + 1, lz), kind: 'lot' });
+  }
+  // native planting on the new earth: creosote, bursage, brittlebush, a few ocotillo
+  const plants = new THREE.Group(); scene.add(plants);
+  if (D.shrubs) D.shrubs.forEach(s => { [s[0], s[1]] = rv(s[0], s[1]); });
+  if (D.palms) D.palms.forEach(s => { [s[0], s[1]] = rv(s[0], s[1]); });
+  if (D.shrubs) {
+    const SP = { creosote: [0x6d7a46, .75], bursage: [0xa6a786, .9], brittlebush: [0xb7b593, 1] };
+    const blob = new THREE.IcosahedronGeometry(1, 1), dummy = new THREE.Object3D();
+    for (const [nm, [col, flat]] of Object.entries(SP)) {
+      const list = D.shrubs.filter(s => s[3] === nm); if (!list.length) continue;
+      const im = new THREE.InstancedMesh(blob, new THREE.MeshLambertMaterial({ color: col, flatShading: true }), list.length);
+      list.forEach((s, k) => { const h = s[2], r = h * (.55 + .25 * Math.random());
+        dummy.position.set(s[0], groundAt(s[0], s[1]) + h * .42 * flat, s[1]); dummy.scale.set(r, h * .5 * flat, r * (.8 + .4 * Math.random()));
+        dummy.rotation.y = Math.random() * 6.28; dummy.updateMatrix(); im.setMatrixAt(k, dummy.matrix); });
+      im.castShadow = true; plants.add(im);
+    }
+    const cane = new THREE.CylinderGeometry(.03, .06, 1, 5); cane.translate(0, .5, 0);
+    const oc = D.shrubs.filter(s => s[3] === 'ocotillo'), canes = new THREE.InstancedMesh(cane, new THREE.MeshLambertMaterial({ color: 0x5d5a3c }), oc.length * 9);
+    let c = 0;
+    for (const s of oc) for (let k = 0; k < 9; k++) {
+      dummy.position.set(s[0], groundAt(s[0], s[1]), s[1]); dummy.rotation.set((Math.random() - .5) * .5, Math.random() * 6.28, (Math.random() - .5) * .5);
+      dummy.scale.set(1, s[2] * (.7 + .3 * Math.random()), 1); dummy.updateMatrix(); canes.setMatrixAt(c++, dummy.matrix);
+    }
+    canes.castShadow = true; plants.add(canes);
+  }
+  // palms (inventory v1 from the drone photo): trunk, a skirt of old fronds on the big ones, a fan crown
+  const palmGroup = new THREE.Group(); scene.add(palmGroup);
+  if (D.palms) {
+    const HT = { L: 12, M: 7, S: 3 }, TR = { L: .42, M: .24, S: .16 };
+    const trunkMat = new THREE.MeshLambertMaterial({ color: 0x8a7a63 }), skirtMat = new THREE.MeshLambertMaterial({ color: 0xb59a6a }),
+          leafMat = new THREE.MeshLambertMaterial({ color: 0x5f7a3c, side: THREE.DoubleSide });
+    const blade = new THREE.PlaneGeometry(1, .5); blade.translate(.5, 0, 0);
+    for (const [x, z, crown, size] of D.palms) {
+      const h = HT[size] * (.85 + .3 * Math.random()), r = TR[size], g0 = groundAt(x, z);
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(r * .85, r, h, 8), trunkMat); trunk.position.set(x, g0 + h / 2, z); trunk.castShadow = true; palmGroup.add(trunk);
+      if (size !== 'S') { const sk = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.9, r * 1.4, h * .22, 10), skirtMat); sk.position.set(x, g0 + h * .86, z); sk.castShadow = true; palmGroup.add(sk); }
+      const n = 16, fronds = new THREE.InstancedMesh(blade, leafMat, n), dm = new THREE.Object3D();
+      for (let k = 0; k < n; k++) {
+        dm.position.set(x, g0 + h, z); dm.rotation.set(0, k / n * Math.PI * 2 + Math.random() * .3, -.15 - Math.random() * .55);
+        dm.scale.set(crown / 2 * (.85 + .3 * Math.random()), crown / 3, 1); dm.updateMatrix(); fronds.setMatrixAt(k, dm.matrix);
+      }
+      fronds.castShadow = true; palmGroup.add(fronds);
+    }
+  }
+  for (const l of D.labels) { const [X, Z] = rv(l.p[0], l.p[2]); tags.unshift({ el: mkTag(l.t, l.s, ''), p: new THREE.Vector3(X, l.p[1], Z), kind: 'label' }); }
+  function mkTag(t, s, cls) { const d = document.createElement('div'); d.className = 'tag ' + cls; d.textContent = t;
+    if (s) { const sm = document.createElement('small'); sm.textContent = s; d.appendChild(sm); } document.getElementById('labels').appendChild(d); return d; }
+
+  document.getElementById('ff-ex').textContent = D.ff.existing.toFixed(1) + ' ft';
+  document.getElementById('ff-add').textContent = D.ff.addition.toFixed(1) + ' ft';
+
+  // views (x east, z south)
+  const VIEWS = { over: [[0, 150, 0.8], [0, 0, 0]], road: [[62, 22, 58], [0, 3, 0]], pool: [[-4, 14, -46], [4, 2, -8]], eye: [[34, 1.7 + groundAt(34, 30), 30], [0, 3, 0]],
+    porch: [[0, 2.4 + groundAt(0, -16), -16], [11, 1.6, -3]], street: [[20, 2.2 + groundAt(20, 12), 12], [14, 1.6, -1]] };
+  for (const k in VIEWS) for (const q of VIEWS[k]) { const [X, Z] = rv(q[0], q[2]); q[0] = X; q[2] = Z; }
+  VIEWS.over = [[CX, 300, CZ + 1], [CX, 0, CZ]];
+  window.__view = (p, t) => { anim = null; camera.position.set(...p); controls.target.set(...t); controls.update(); renderer.render(scene, camera); }; window.__cam = () => [camera.position.toArray(), controls.target.toArray()];
+  let anim = null;
+  function go(v) { const [p, t] = VIEWS[v]; anim = { p0: camera.position.clone(), t0: controls.target.clone(), p1: new THREE.Vector3(...p), t1: new THREE.Vector3(...t), k: 0 };
+    document.querySelectorAll('#views button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === v)); }
+  document.querySelectorAll('#views button').forEach(b => b.addEventListener('click', () => go(b.dataset.v)));
+  camera.position.set(...(([X, Z]) => [X, 48, Z])(rv(70, 78)));
+
+  const toggle = (id, fn) => { const b = document.getElementById(id); b.addEventListener('click', () => { const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); fn(on); }); };
+  const pressed = id => document.getElementById(id).getAttribute('aria-pressed') === 'true';
+  const applyVis = () => { const roofs = pressed('t-roof'), add = pressed('t-add');
+    for (const m of new Set([...groups.roof, ...groups.add])) m.visible = (!groups.add.includes(m) || add) && (!groups.roof.includes(m) || roofs); };
+  toggle('t-roof', applyVis);
+  toggle('t-add', applyVis);
+  toggle('t-lots', on => { lotLines.forEach(l => l.visible = on); showTags(); });
+  toggle('t-labels', () => showTags());
+  toggle('t-photo', on => ground.material = on ? groundPhoto : groundPlain);
+  toggle('t-grade', on => { setGround(on ? ZP : Z0, on); plants.visible = on; });
+  toggle('t-water', on => { water.visible = on; });
+  toggle('t-palms', on => { palmGroup.visible = on; });
+  function showTags() { const lotsOn = document.getElementById('t-lots').getAttribute('aria-pressed') === 'true', labOn = document.getElementById('t-labels').getAttribute('aria-pressed') === 'true';
+    tags.forEach(t => t.on = t.kind === 'lot' ? lotsOn && labOn : labOn); }
+  showTags();
+
+  function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+  addEventListener('resize', resize); resize();
+  const needle = document.getElementById('needle'), v = new THREE.Vector3();
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  (function loop() {
+    requestAnimationFrame(loop);
+    if (anim) { anim.k = Math.min(1, anim.k + (reduce ? 1 : .045)); const e = anim.k < .5 ? 2 * anim.k * anim.k : 1 - Math.pow(-2 * anim.k + 2, 2) / 2;
+      camera.position.lerpVectors(anim.p0, anim.p1, e); controls.target.lerpVectors(anim.t0, anim.t1, e); if (anim.k >= 1) anim = null; }
+    if (water.visible && !reduce) flowStep();
+    controls.update(); renderer.render(scene, camera);
+    const dx = camera.position.x - controls.target.x, dz = camera.position.z - controls.target.z, az = Math.atan2(CT * dx + ST * dz, -ST * dx + CT * dz); needle.style.transform = `rotate(${az}rad)`;
+    const w = stage.clientWidth, h = stage.clientHeight;
+    const placed = [];                                   // labels first, then lots; a tag that would overlap one already shown waits
+    for (const t of tags) {
+      v.copy(t.p).project(camera); let vis = t.on && v.z < 1 && Math.abs(v.x) < 1.05 && Math.abs(v.y) < 1.05;
+      if (vis) {
+        if (!t.bw && t.el.offsetWidth) { t.bw = t.el.offsetWidth; t.bh = t.el.offsetHeight; }
+        const x = (v.x + 1) / 2 * w, y = (1 - v.y) / 2 * h, bw = t.bw || 90, bh = t.bh || 32;
+        const r = [x - bw / 2 - 3, y - bh - 3, x + bw / 2 + 3, y + 3];
+        if (placed.some(q => r[0] < q[2] && r[2] > q[0] && r[1] < q[3] && r[3] > q[1])) vis = false;
+        else { placed.push(r); t.el.style.left = x + 'px'; t.el.style.top = y + 'px'; }
+      }
+      t.el.hidden = !vis;
+    }
+  })();
+})();
+</script>
+</body>
+</html>
