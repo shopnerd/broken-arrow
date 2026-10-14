@@ -232,7 +232,7 @@ button:focus-visible { outline: 2px solid var(--pool); outline-offset: 2px; }
         for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if (ii >= 0 && jj >= 0 && ii < D.n && jj < D.n) houseMask[jj * D.n + ii] = 1; }
       }
     }
-    if (p.kind === 'roof') groups.roof.push(mesh);
+    if (p.kind === 'roof' || /soffit|rafter|fascia|chimney cap/.test(p.name)) groups.roof.push(mesh);   // the whole roof: slab, wood soffit, rafters, fascia
     if (isAdd) groups.add.push(mesh);
   }
 
